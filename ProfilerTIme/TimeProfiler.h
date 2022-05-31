@@ -5,6 +5,7 @@
 #include <stack>
 
 #define PROFILE_TIME
+#define MAIN_THREAD_REPORT_CHECK
 
 class TimeProfiler;
 
@@ -25,6 +26,8 @@ private:
     std::mutex m_StartMtx;
     std::mutex m_EndMtx;
     std::mutex m_LogMtx;
+    std::mutex m_MainThreadEpochMtx;
+    double m_LastMainThreadEpoch;
     std::unordered_map<std::string, std::stack<double>> m_StartEpochs;
     std::unordered_map<std::string, float> m_AveragesDurations;
     std::unordered_map<uintptr_t, std::string> m_LastFunctionsByThread;
@@ -48,6 +51,11 @@ public:
 
     void End(const std::string& crFuncSignatureStr);
 
+    void LogExit();
+
+    void MainThreadReport();
+
+    std::mutex& getMainThreadEpochMtx();
 };
 
 extern TimeProfiler* gpTimeProfiler;

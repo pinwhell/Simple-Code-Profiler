@@ -75,6 +75,12 @@ int main()
 
     tFunc1.join();
     tFunc2.join();
+
+    while(true)
+    {
+    	Sleep(100);
+    	gpTimeProfiler->MainThreadReport();
+    }
 }
 
 /*

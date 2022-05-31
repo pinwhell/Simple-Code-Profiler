@@ -5,18 +5,54 @@
 #include <iostream>
 #include <iomanip>
 #include <fstream>
+#include <functional>
+#include <thread>
+
+#include <signal.h>
 
 #ifdef _MSC_VER
 #include <Windows.h>
 #define GetTID() GetCurrentThreadId()
-#elif __linux__ || ANDROID
-
+#define __SLEEP(sec) Sleep(sec*1000)
+#elif __linux__ || ANDROID || __arm__
+#include <pthread.h>
+#include <unistd.h>
+#define GetTID() pthread_self()
+#define __SLEEP(sec) sleep(sec)
 #endif
 
 TimeProfiler* gpTimeProfiler = nullptr;
 
+void SigIntHandler(int signum)
+{
+    gpTimeProfiler->LogExit();
+}
+
 TimeProfiler::TimeProfiler()
-{}
+    : m_LastMainThreadEpoch(FPSTimer::GetCurrMillis())
+{
+
+    #ifdef MAIN_THREAD_REPORT_CHECK
+    std::thread tProfile([&]{
+        for(;;)
+        {
+            std::lock_guard<std::mutex> mainThreadEpochGuard(m_MainThreadEpochMtx);
+            
+            if(MILLIS_TO_SEC(FPSTimer::GetCurrMillis() - m_LastMainThreadEpoch) > 5)
+            {
+                LogToConsole();
+                exit(2);
+            }
+
+            __SLEEP(1);
+        }
+    });
+    #endif
+
+    signal(SIGINT, (sighandler_t)SigIntHandler);
+
+    tProfile.detach();
+}
 
 TimeProfiler::~TimeProfiler()
 {
@@ -68,18 +104,24 @@ void TimeProfiler::LogToStream(std::ostream& outStream)
 
         if (lUnits >= 1000)
         {
-            pUnitsStr = (char*)"sec";
             lUnits /= 1000.f;
+            pUnitsStr = (char*)"sec";
 
             if (lUnits >= 60)
             {
+                lUnits /= 60.f;
                 pUnitsStr = (char*)"min";
-                lUnits /= 60;
 
                 if (lUnits >= 60)
                 {
+                    lUnits /= 60.f;
                     pUnitsStr = (char*)"hour";
-                    lUnits /= 60;
+
+                    if (lUnits >= 24)
+                    {
+                        lUnits /= 24.f;
+                        pUnitsStr = (char*)"days";
+                    }
                 }
             }
         }
@@ -128,7 +170,7 @@ void TimeProfiler::End(const std::string& crFuncSignatureStr)
     auto& rEpochs = m_StartEpochs[crFuncSignatureStr];
 
     if (!UMapExist(m_StartEpochs, crFuncSignatureStr) || rEpochs.empty())
-        __debugbreak();
+        gpTimeProfiler->LogExit();
 
     lTimeDiff = FPSTimer::GetCurrMillis() - rEpochs.top(); rEpochs.pop();
 
@@ -139,6 +181,24 @@ void TimeProfiler::End(const std::string& crFuncSignatureStr)
         m_AveragesDurations[crFuncSignatureStr] += lTimeDiff;
         m_AveragesDurations[crFuncSignatureStr] /= 2.f;
     }
+}
+
+void TimeProfiler::LogExit()
+{
+    LogToConsole();
+    exit(1);
+}
+
+void TimeProfiler::MainThreadReport()
+{
+    std::lock_guard<std::mutex> mainThreadEpochGuard(m_MainThreadEpochMtx);
+
+    m_LastMainThreadEpoch = FPSTimer::GetCurrMillis();
+}
+
+std::mutex& TimeProfiler::getMainThreadEpochMtx()
+{
+    return m_MainThreadEpochMtx;
 }
 
 ProfileProcInfo::ProfileProcInfo(TimeProfiler* pTimeProfiler, const std::string& rProcSignature)
