@@ -93,8 +93,9 @@ void TimeProfiler::LogToStream(std::ostream& outStream)
         return p1.second > p2.second;
         });
 
+    outStream << std::endl;
 
-    outStream << std::setw(20) << std::left << "Nombre" << std::setw(13) << std::left << "Average" << std::setw(10) << std::left << "Unit" << std::endl;
+    outStream << std::setw(45) << std::left << "Nombre" << std::setw(13) << std::left << "Average" << std::setw(10) << std::left << "Unit" << std::endl;
 
     for (const auto& lAverage : lAverages)
     {
@@ -126,7 +127,7 @@ void TimeProfiler::LogToStream(std::ostream& outStream)
             }
         }
 
-        outStream << std::setw(20) << std::left << lAverage.first << std::setw(13) << std::left << lUnits << std::setw(10) << std::left << pUnitsStr << std::endl;
+        outStream << std::setw(45) << std::left << lAverage.first << std::setw(13) << std::left << lUnits << std::setw(10) << std::left << pUnitsStr << std::endl;
     }
 
     outStream << std::endl;

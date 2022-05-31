@@ -67,10 +67,18 @@ extern TimeProfiler* gpTimeProfiler;
     x; \
 }
 
+#define PROF_CALL_RET(ret, func)\
+{ \
+    auto profStruct = gpTimeProfiler->Start(#func); \
+    ret = func; \
+}
+
 #define PROF_THREAD(x) auto profStruct = gpTimeProfiler->Start(#x);
 
 #else
 #define PROF_CALL(x) x
+
+#define PROF_CALL_RET(ret, func) do {} while(false)
 
 #define PROF_THREAD(x) do {} while(false)
 #endif
