@@ -3,6 +3,7 @@
 #include <unordered_map>
 #include <mutex>
 #include <stack>
+#include <string>
 
 #define PROFILE_TIME
 #define MAIN_THREAD_REPORT_CHECK
