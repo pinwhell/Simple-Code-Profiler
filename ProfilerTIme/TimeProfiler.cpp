@@ -8,8 +8,14 @@
 #include <functional>
 #include <thread>
 #include <chrono>
-
 #include <signal.h>
+#include <sstream>
+
+#ifdef _MSC_VER
+#define LocalTime(_tm, ptime) localtime_s(_tm, ptime)
+#elif __linux__ || ANDROID || __arm__
+#define LocalTime(_tm, ptime) *_tm = *localtime(ptime)
+#endif
 
 #ifdef _MSC_VER
 #include <Windows.h>
@@ -25,6 +31,39 @@
 static uint32_t GetCurrMillis() {
     return static_cast<uint32_t>(std::chrono::duration_cast<std::chrono::milliseconds>(
         std::chrono::system_clock::now().time_since_epoch()).count());
+}
+
+template<typename T, typename J>
+bool UMapExist(const std::unordered_map<T, J>& map, const T& key)
+{
+    return map.find(key) != map.end();
+}
+
+template<typename T, typename J>
+void StoreUMap(const std::unordered_map<T, J>& uMap, std::vector<std::pair<T, J>>& outVec)
+{
+    for (const auto& kv : uMap)
+        outVec.push_back(kv);
+}
+
+void getTimeRefStr(std::string& rOutTime)
+{
+    std::ostringstream oss;
+    auto t = std::time(nullptr);
+    tm _tm;
+    LocalTime(&_tm, &t);
+
+    oss << std::put_time(&_tm, "%H-%M-%S");
+    rOutTime = oss.str();
+}
+
+std::string getTimeStr()
+{
+    std::string outTime = "";
+
+    getTimeRefStr(outTime);
+
+    return outTime;
 }
 
 TimeProfiler* gpTimeProfiler = nullptr;

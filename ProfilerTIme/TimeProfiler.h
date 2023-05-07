@@ -4,6 +4,7 @@
 #include <mutex>
 #include <stack>
 #include <string>
+#include <vector>
 
 #define PROFILE_TIME
 #define MAIN_THREAD_REPORT_CHECK
