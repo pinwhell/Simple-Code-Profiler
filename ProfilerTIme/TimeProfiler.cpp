@@ -7,6 +7,7 @@
 #include <fstream>
 #include <functional>
 #include <thread>
+#include <chrono>
 
 #include <signal.h>
 
@@ -21,6 +22,11 @@
 #define __SLEEP(sec) sleep(sec)
 #endif
 
+static uint32_t GetCurrMillis() {
+    return static_cast<uint32_t>(std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::system_clock::now().time_since_epoch()).count());
+}
+
 TimeProfiler* gpTimeProfiler = nullptr;
 
 void SigIntHandler(int signum)
@@ -29,7 +35,7 @@ void SigIntHandler(int signum)
 }
 
 TimeProfiler::TimeProfiler()
-    : m_LastMainThreadEpoch(FPSTimer::GetCurrMillis())
+    : m_LastMainThreadEpoch(GetCurrMillis())
 {
 
     #ifdef MAIN_THREAD_REPORT_CHECK
@@ -38,7 +44,7 @@ TimeProfiler::TimeProfiler()
         {
             std::lock_guard<std::mutex> mainThreadEpochGuard(m_MainThreadEpochMtx);
             
-            if(MILLIS_TO_SEC(FPSTimer::GetCurrMillis() - m_LastMainThreadEpoch) > 5)
+            if(MILLIS_TO_SEC(GetCurrMillis() - m_LastMainThreadEpoch) > 5)
             {
                 LogToConsole();
                 exit(2);
@@ -159,7 +165,7 @@ ProfileProcInfo TimeProfiler::Start(const std::string& crFuncSignatureStr)
     if (!UMapExist(m_StartEpochs, crFuncSignatureStr))
         m_StartEpochs[crFuncSignatureStr] = std::stack<double>();
 
-    m_StartEpochs[crFuncSignatureStr].push(FPSTimer::GetCurrMillis());
+    m_StartEpochs[crFuncSignatureStr].push(GetCurrMillis());
 
     return ProfileProcInfo(this, crFuncSignatureStr);
 }
@@ -173,7 +179,7 @@ void TimeProfiler::End(const std::string& crFuncSignatureStr)
     if (!UMapExist(m_StartEpochs, crFuncSignatureStr) || rEpochs.empty())
         gpTimeProfiler->LogExit();
 
-    lTimeDiff = FPSTimer::GetCurrMillis() - rEpochs.top(); rEpochs.pop();
+    lTimeDiff = GetCurrMillis() - rEpochs.top(); rEpochs.pop();
 
     if (!UMapExist(m_AveragesDurations, crFuncSignatureStr))
         m_AveragesDurations[crFuncSignatureStr] = lTimeDiff;
@@ -194,7 +200,7 @@ void TimeProfiler::MainThreadReport()
 {
     std::lock_guard<std::mutex> mainThreadEpochGuard(m_MainThreadEpochMtx);
 
-    m_LastMainThreadEpoch = FPSTimer::GetCurrMillis();
+    m_LastMainThreadEpoch = GetCurrMillis();
 }
 
 std::mutex& TimeProfiler::getMainThreadEpochMtx()
