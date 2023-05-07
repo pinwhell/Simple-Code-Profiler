@@ -6,6 +6,10 @@
 #include <string>
 #include <vector>
 
+#define SEC_TO_MILLIS(sec) (sec) * 1000
+#define MILLIS_TO_SEC(mill) (mill) / 1000
+#define TRANSCURRED_TIME(t)  FPSTimer::GetCurrMillis() - (t)
+
 #define PROFILE_TIME
 #define MAIN_THREAD_REPORT_CHECK
 

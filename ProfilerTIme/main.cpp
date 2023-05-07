@@ -1,6 +1,7 @@
 #include <iostream>
 #include <Windows.h>
 #include <functional>
+#include <thread>
 #include "TimeProfiler.h"
 
 void SomeFunc2()

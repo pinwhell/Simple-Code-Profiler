@@ -1,6 +1,4 @@
 #include "TimeProfiler.h"
-#include "FPSTimer.h"
-#include "Utils.h"
 #include <algorithm>
 #include <iostream>
 #include <iomanip>
@@ -11,13 +9,13 @@
 #include <signal.h>
 #include <sstream>
 
-#ifdef _MSC_VER
+#ifdef _WIN32
 #define LocalTime(_tm, ptime) localtime_s(_tm, ptime)
 #elif __linux__ || ANDROID || __arm__
 #define LocalTime(_tm, ptime) *_tm = *localtime(ptime)
 #endif
 
-#ifdef _MSC_VER
+#ifdef _WIN32
 #include <Windows.h>
 #define GetTID() GetCurrentThreadId()
 #define __SLEEP(sec) Sleep(sec*1000)
@@ -68,7 +66,7 @@ std::string getTimeStr()
 
 TimeProfiler* gpTimeProfiler = nullptr;
 
-void SigIntHandler(int signum)
+extern "C" void SigIntHandler(int signum)
 {
     gpTimeProfiler->LogExit();
 }
@@ -94,7 +92,7 @@ TimeProfiler::TimeProfiler()
     });
     #endif
 
-    signal(SIGINT, (sighandler_t)SigIntHandler);
+    signal(SIGINT, SigIntHandler);
 
     tProfile.detach();
 }
