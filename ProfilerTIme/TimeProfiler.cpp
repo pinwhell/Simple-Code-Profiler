@@ -94,7 +94,9 @@ TimeProfiler::TimeProfiler()
 
     signal(SIGINT, SigIntHandler);
 
+#ifdef MAIN_THREAD_REPORT_CHECK
     tProfile.detach();
+#endif
 }
 
 TimeProfiler::~TimeProfiler()
