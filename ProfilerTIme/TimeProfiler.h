@@ -10,8 +10,8 @@
 #define MILLIS_TO_SEC(mill) (mill) / 1000
 #define TRANSCURRED_TIME(t)  FPSTimer::GetCurrMillis() - (t)
 
-#define PROFILE_TIME
-#define MAIN_THREAD_REPORT_CHECK
+//#define PROFILE_TIME
+//#define MAIN_THREAD_REPORT_CHECK
 
 class TimeProfiler;
 
